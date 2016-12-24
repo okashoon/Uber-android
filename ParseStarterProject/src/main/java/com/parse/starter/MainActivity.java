@@ -16,6 +16,7 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.Switch;
 
@@ -31,8 +32,11 @@ import com.parse.SaveCallback;
 public class MainActivity extends AppCompatActivity {
 
     Switch riderDriverSwitch;
+    EditText userNameEditText;
 
     public void getStarted(View view){
+
+        String username = userNameEditText.getText().toString();
 
 
     String riderOrDriver = "rider";
@@ -42,6 +46,7 @@ public class MainActivity extends AppCompatActivity {
 
         }
         ParseUser.getCurrentUser().put("riderOrDriver", riderOrDriver);
+        ParseUser.getCurrentUser().put("username", username);
 
        redirect();
 
@@ -52,7 +57,11 @@ public class MainActivity extends AppCompatActivity {
         if(ParseUser.getCurrentUser().getString("riderOrDriver").equals("rider")){
             Intent i = new Intent(getApplicationContext(),YourLocation.class);
             startActivity(i);
-            Log.i("aaa","logged in as a rider");
+            Log.i("aaa","logged in as a rider:" + ParseUser.getCurrentUser().getUsername());
+        } else {
+            Intent i = new Intent(getApplicationContext(),DriverActivity.class);
+            startActivity(i);
+            Log.i("aaa", "logged in as a rider:" + ParseUser.getCurrentUser().getUsername());
         }
     }
 
@@ -64,7 +73,8 @@ public class MainActivity extends AppCompatActivity {
 
     getSupportActionBar().hide();
 
-    riderDriverSwitch = (Switch)findViewById(R.id.switch1);
+   riderDriverSwitch = (Switch)findViewById(R.id.switch1);
+   userNameEditText = (EditText)findViewById(R.id.userName);
 
 
 

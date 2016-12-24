@@ -59,6 +59,8 @@
         android:textSize="24sp"
         android:paddingRight="10dp"/>
 
+
+
     <Button
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -68,6 +70,15 @@
         android:layout_centerHorizontal="true"
         android:layout_marginTop="74dp"
         android:onClick="getStarted"/>
+
+    <EditText
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/userName"
+        android:layout_below="@+id/textView"
+        android:layout_centerHorizontal="true"
+        android:layout_margin="20dp"
+        android:hint="Enter User name"/>
 
 
 </RelativeLayout>

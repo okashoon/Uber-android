@@ -18,11 +18,17 @@ import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.parse.FindCallback;
+import com.parse.GetCallback;
 import com.parse.ParseACL;
 import com.parse.ParseException;
+import com.parse.ParseGeoPoint;
 import com.parse.ParseObject;
+import com.parse.ParseQuery;
 import com.parse.ParseUser;
 import com.parse.SaveCallback;
+
+import java.util.List;
 
 public class YourLocation extends FragmentActivity implements OnMapReadyCallback,LocationListener {
 
@@ -33,12 +39,19 @@ public class YourLocation extends FragmentActivity implements OnMapReadyCallback
     Button requestUberButton;
     TextView statusTextView;
 
+    LatLng latLng;
+
+
     boolean requested = false;
 
     public void requestUber(View view){
-        if (requested == false) {
+        if (!requested ) {
             final ParseObject request = new ParseObject("Request");
             request.put("rider", ParseUser.getCurrentUser().getUsername());
+
+            ParseGeoPoint geoPoint = new ParseGeoPoint(latLng.latitude,latLng.longitude);
+            request.put("location", geoPoint);
+
             ParseACL acl = new ParseACL();
             acl.setPublicReadAccess(true);
             acl.setPublicWriteAccess(true);
@@ -47,7 +60,7 @@ public class YourLocation extends FragmentActivity implements OnMapReadyCallback
                 @Override
                 public void done(ParseException e) {
                     requestUberButton.setText("Cancel UBER");
-                    statusTextView.setText("Ride requested");
+                    statusTextView.setText("Finding UBER driver");
                     requested = true;
 
 
@@ -55,6 +68,22 @@ public class YourLocation extends FragmentActivity implements OnMapReadyCallback
             });
         } else {
 
+            requestUberButton.setText("Request UBER");
+            statusTextView.setText("Ride cancelled");
+            requested = false;
+
+            ParseQuery<ParseObject> query =ParseQuery.getQuery("Request");
+            query.whereEqualTo("rider",ParseUser.getCurrentUser().getUsername());
+            query.findInBackground(new FindCallback<ParseObject>() {
+                @Override
+                public void done(List<ParseObject> objects, ParseException e) {
+                    if (objects.size() > 0) {
+                        for (ParseObject object : objects){
+                            object.deleteInBackground();
+                        }
+                    }
+                }
+            });
 
 
         }
@@ -99,7 +128,7 @@ public class YourLocation extends FragmentActivity implements OnMapReadyCallback
         Location location = locationManager.getLastKnownLocation(provider);
 
         if(location!=null){
-            LatLng latLng = new LatLng(location.getLatitude(),location.getLongitude());
+            latLng = new LatLng(location.getLatitude(),location.getLongitude());
             mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(latLng, 10));
             mMap.addMarker(new MarkerOptions().position(latLng).title("Your position"));
 
@@ -110,10 +139,29 @@ public class YourLocation extends FragmentActivity implements OnMapReadyCallback
     public void onLocationChanged(Location location) {
 
         mMap.clear();
-        LatLng latLng = new LatLng(location.getLatitude(),location.getLongitude());
+        latLng = new LatLng(location.getLatitude(),location.getLongitude());
         mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(latLng, 10));
         mMap.addMarker(new MarkerOptions().position(latLng).title("Your position"));
 
+        //update rider location whenever he moves
+        if(requested) {
+            final ParseGeoPoint geoPoint = new ParseGeoPoint(latLng.latitude, latLng.longitude);
+            ParseQuery<ParseObject> query =ParseQuery.getQuery("Request");
+            query.whereEqualTo("rider",ParseUser.getCurrentUser().getUsername());
+            query.findInBackground(new FindCallback<ParseObject>() {
+                @Override
+                public void done(List<ParseObject> objects, ParseException e) {
+                    if (objects.size() > 0) {
+                        for (ParseObject object : objects){
+                            object.put("location", geoPoint);
+                            object.saveInBackground();
+                        }
+                    }
+                }
+            });
+
+
+        }
 
     }
 
